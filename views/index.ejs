@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>index</title>
+</head>
+<body>
+  <% if (!user) { %>
+    <h2>Welcome! Please log in.</h2>
+  <% } else { %>
+    <h2>Hello, <%= JSON.stringify(user) %>.</h2>
+  <% } %>
+</body>
+</html>

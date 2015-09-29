@@ -72,11 +72,52 @@ var app = express();
   
 
 app.get('/', function(req, res){
-  console.log(req.user.accessToken)
-  request("https://graph.facebook.com/v2.4/" +req.user.facebookId + "/posts?access_token=" + req.user.accessToken,
+  console.log(req.user.accessToken);
+  request("https://graph.facebook.com/v2.4/" + req.user.facebookId + "/posts?access_token=" + req.user.accessToken,
     function (error, response, body) {
     if (!error && response.statusCode == 200) {
-      console.log("WHOA SUCCESS!", body);
+      console.log("WHOA SUCCESS!", JSON.parse(body));
+      var dataArr = JSON.parse(body);
+      console.log(dataArr.data.message);
+      // var realDataArr = dataArr.data;
+      var dataById = dataArr.data.filter(filterById);
+      function filterById(obj){
+        if('message' in obj){
+          return true;
+        }
+        else{
+          return false;
+        }
+        console.log(dataById);
+      }
+
+
+      // dataArr.data.filter(function(el){
+      //   if(el.message){
+      //   }
+      //   return dataArr;
+      // });
+      
+
+
+      // for (var i=0; i<dataArr.length; i++)
+      //     for (var message in dataArr.data[i]) {
+      //         console.log("Message: " + message[0]);
+      //     }
+
+
+      
+      // filtered is [12, 130, 44]
+      // dataArr.forEach(function (data) {
+      //   console.log(data[0].message);
+      //   console.log(data[0].created_time);
+
+      // });
+
+
+      // console.log(data.data[0].message);
+      // console.log(data.data[0].created_time);
+
     }
     else {
       console.log("uhhh we fucked up...", error, response);
@@ -108,7 +149,7 @@ app.get('/logout', function(req, res){
 // });
 
 // GET authorize facebook account
-app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email','user_friends','user_status'] }));
+app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email','user_posts','user_status'] }));
 
 
 //GET facebook callback

@@ -73,23 +73,42 @@ var app = express();
 
 app.get('/', function(req, res){
   console.log(req.user.accessToken);
-  request("https://graph.facebook.com/v2.4/" + req.user.facebookId + "/posts?access_token=" + req.user.accessToken,
+  request("https://graph.facebook.com/v2.4/" + req.user.facebookId + "/posts?limit=2000&access_token=" + req.user.accessToken,
     function (error, response, body) {
     if (!error && response.statusCode == 200) {
-      console.log("WHOA SUCCESS!", JSON.parse(body));
+      // console.log("WHOA SUCCESS!", JSON.parse(body));
       var dataArr = JSON.parse(body);
-      console.log(dataArr.data.message);
-      // var realDataArr = dataArr.data;
-      var dataById = dataArr.data.filter(filterById);
-      function filterById(obj){
-        if('message' in obj){
-          return true;
+      // console.log(dataArr.data);
+      dataArr.data.forEach(function(value, index, array) {
+        if(value.message){
+        console.log(value);
+        return value;
         }
-        else{
-          return false;
-        }
-        console.log(dataById);
-      }
+
+
+        // console.log(index);
+        // console.log(array);
+    // The callback is executed for each element in the array.
+    // `value` is the element itself (equivalent to `array[index]`)
+    // `index` will be the index of the element in the array
+    // `array` is a reference to the array itself (i.e. `data.items` in this case)
+      }); 
+
+    }
+      
+
+
+
+      // var dataById = dataArr.data.filter(filterById);
+      // function filterById(obj){
+      //   if('message' in obj){
+      //     return true;
+      //   }
+      //   else{
+      //     return false;
+      //   }
+      //   console.log(dataById);
+      // }
 
 
       // dataArr.data.filter(function(el){
@@ -118,7 +137,7 @@ app.get('/', function(req, res){
       // console.log(data.data[0].message);
       // console.log(data.data[0].created_time);
 
-    }
+    
     else {
       console.log("uhhh we fucked up...", error, response);
     }

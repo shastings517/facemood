@@ -6,9 +6,10 @@
 </head>
 <body>
   <% if (!user) { %>
-    <h2>Welcome! Please log in.</h2>
+    <h2>Welcome! Please log in. <a href="/login">LOGIN</a></h2>
   <% } else { %>
     <h2>Hello, <%= JSON.stringify(user) %>.</h2>
+    <p><%= user.friends %></p>
   <% } %>
 </body>
 </html>

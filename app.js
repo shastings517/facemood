@@ -6,10 +6,10 @@ var express = require('express'),
   session = require('cookie-session');
   bodyParser = require("body-parser"),
   methodOverride = require('method-override'),
-  
-  engine = require('ejs-mate');
-  // db = require("./models/index.js");
-  // REPLACE_WITH_COLLECTION = db.REPLACE_WITH_COLLECTION,
+  db = require("./models/index.js"),
+  User = db.User,
+  engine = require('ejs-mate'),
+  request = require('request');
   
 
 
@@ -30,24 +30,28 @@ passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: "http://localhost:3000/auth/facebook/callback",
-    // enableProof: false
+    enableProof: false
   },
-  function(accessToken, refreshToken, profile, done) {
-      // asynchronous verification, for effect...
-      process.nextTick(function () {
-        console.log(accessToken);
-        // To keep the example simple, the user's Facebook profile is returned to
-        // represent the logged-in user.  In a typical application, you would want
-        // to associate the Facebook account with a user record in your database,
-        // and return that user instead.
-        return done(null, profile);
-      });
-    }
   // function(accessToken, refreshToken, profile, done) {
-  //   User.findOrCreate({ facebookId: profile.id }, function (err, user) {
-  //     return done(err, user);
-  //   });
-  // }
+  //     // asynchronous verification, for effect...
+  //     // process.nextTick(function () {
+
+  //       console.log(accessToken);
+  //       // To keep the example simple, the user's Facebook profile is returned to
+  //       // represent the logged-in user.  In a typical application, you would want
+  //       // to associate the Facebook account with a user record in your database,
+  //       // and return that user instead.
+  //       return done(null, profile);
+  //     });
+  //   }
+  function(accessToken, refreshToken, profile, done) {
+    console.log("ACCESS TOKEN", accessToken);
+    console.log("REFRESH TOKEN", refreshToken);
+    console.log("PROFILE TOKEN", profile);
+    User.findOrCreate({ facebookId: profile.id, name: profile.displayName, accessToken: accessToken }, function (err, user) {
+      return done(err, user);
+    });
+  }
 ));
 
 var app = express();
@@ -67,28 +71,51 @@ var app = express();
   app.use(express.static(__dirname + '/public'));
   
 
-  app.get('/', function(req, res){
-    res.render('index', { user: req.user });
+app.get('/', function(req, res){
+  console.log(req.user.accessToken)
+  request("https://graph.facebook.com/v2.4/" +req.user.facebookId + "/posts?access_token=" + req.user.accessToken,
+    function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log("WHOA SUCCESS!", body);
+    }
+    else {
+      console.log("uhhh we fucked up...", error, response);
+    }
   });
+  res.render('index', { user: req.user });
+});
 
-  app.get('/account', ensureAuthenticated, function(req, res){
-    res.render('account', { user: req.user });
-  });
+app.get('/account', ensureAuthenticated, function(req, res){
+  res.render('account', { user: req.user });
+});
 
-  app.get('/login', function(req, res){
-    res.render('login', { user: req.user });
-  });
+app.get('/login', function(req, res){
+  res.render('login', { user: req.user });
+});
 
+app.get('/logout', function(req, res){
+  req.logout()
+  res.redirect("/login");
+});
+
+
+
+// app.request("https://graph.facebook.com/v2.4/me?fields=friends%7Bname%2C%20posts%7Bmessage%7D%7D&access_token=CAACEdEose0cBAG5hIQCmdnzr3hyp7HzLRsFOrWZC2FZBifqHBdlSqrRClJMh37eqnCSk39ccLwfQAVqzS350PNixYRtkALLvTS84cotDTDh2DNrbKF2n17JwHaypBsZAZBlQJRCfR7vIBbbHe6Jzv0Poh6foXmu8kjlDI4fjBOVNHZBybkEjBZCkzTk5PGnZAulYUhuR7xsrM3HbiamyO7R",
+//   function (error, response, body) {
+//   if (!error && response.statusCode == 200) {
+//     console.log(body);
+//   }
+// });
 
 // GET authorize facebook account
-app.get('/auth/facebook',
-  passport.authenticate('facebook'));
+app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email','user_friends','user_status'] }));
 
 
 //GET facebook callback
 app.get('/auth/facebook/callback',
   passport.authenticate('facebook', { failureRedirect: '/login' }),
   function(req, res) {
+
     // Successful authentication, redirect home.
     res.redirect('/');
   });
